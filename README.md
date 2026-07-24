@@ -117,7 +117,7 @@ python3 -m http.server 8000
    git add .
    git commit -m "Initial commit: Uganda flooding & cholera hotspot analysis"
    git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/uganda-flooding-cholera.git
+   git remote add origin https://github.com/viviannakate/uganda-flooding-cholera.git
    git push -u origin main
    ```
 
