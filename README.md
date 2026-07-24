@@ -3,7 +3,7 @@
 A spatiotemporal analysis of the relationship between flooding, WASH (water, sanitation, hygiene) coverage, and cholera burden across Uganda's 112 districts, with an interactive web dashboard.
 
 **[Live Dashboard →](https://YOUR-USERNAME.github.io/uganda-flooding-cholera/)** *(update this link after deploying — see [Deployment](#-deploying-to-github-pages) below)*
-https://viviannakate.github.io/Cholera-Incidence-and-Flooding-in-Uganda/
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
 
@@ -117,7 +117,7 @@ python3 -m http.server 8000
    git add .
    git commit -m "Initial commit: Uganda flooding & cholera hotspot analysis"
    git branch -M main
-   git remote add origin https://github.com/viviannakate/uganda-flooding-cholera.git
+   git remote add origin [https://github.com/viviannakate/uganda-flooding-cholera](https://viviannakate.github.io/Cholera-Incidence-and-Flooding-in-Uganda/).git
    git push -u origin main
    ```
 
