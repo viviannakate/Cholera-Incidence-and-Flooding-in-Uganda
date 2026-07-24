@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uganda Flooding & Cholera Hotspot Dashboard (2011-2016)</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --navy: #0b2545;
+    --blue: #1b6ca8;
+    --teal: #13868c;
+    --red: #c0392b;
+    --orange: #e67e22;
+    --yellow: #f1c40f;
+    --grey: #7f8c8d;
+    --bg: #f4f7fa;
+    --card-bg: #ffffff;
+    --border: #dfe6ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background: var(--bg);
+    color: #1f2d3d;
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: white;
+    padding: 22px 28px;
+  }
+  header h1 {
+    margin: 0 0 4px 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+  header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-card .label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--grey);
+    margin-bottom: 6px;
+  }
+  .stat-card .value {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .stat-card .sub {
+    font-size: 0.78rem;
+    color: var(--grey);
+    margin-top: 2px;
+  }
+  .main-grid {
+    display: grid;
+    grid-template-columns: 2.1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 980px) {
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 18px;
+  }
+  .panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.05rem;
+    color: var(--navy);
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.88rem;
+  }
+  .controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-weight: 600;
+    color: #34495e;
+  }
+  select, input[type=range] {
+    font-family: inherit;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  #map {
+    height: 560px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .legend-box {
+    background: rgba(255,255,255,0.95);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1px solid #333; }
+  canvas { max-width: 100%; }
+  table.dtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  table.dtable th, table.dtable td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.dtable th {
+    background: #eef3f7;
+    cursor: pointer;
+    user-select: none;
+  }
+  table.dtable tr:hover { background: #f8fbfd; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: white;
+  }
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--grey);
+    font-size: 0.82rem;
+  }
+  .search-box {
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    width: 200px;
+  }
+  .popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; color: var(--navy); }
+  .popup-row { font-size: 0.82rem; margin: 2px 0; }
+  .badge-hh { background: var(--red); }
+  .badge-ll { background: var(--blue); }
+  .badge-hl { background: var(--orange); }
+  .badge-lh { background: #9b59b6; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #eef3f7;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #34495e;
+  }
+  .tab-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌊 Uganda Flooding & Cholera Hotspot Dashboard</h1>
+  <p>District-level spatiotemporal analysis, 2011–2016 &nbsp;|&nbsp; 112 districts &nbsp;|&nbsp; WASH coverage, flood exposure & cholera burden</p>
+</header>
+
+<div class="container">
+
+  <div class="stat-cards" id="statCards"></div>
+
+  <div class="main-grid">
+    <!-- LEFT: MAP -->
+    <div>
+      <div class="panel">
+        <h2>Interactive Hotspot Map</h2>
+        <div class="controls">
+          <label>Map layer
+            <select id="layerSelect">
+              <option value="cases">Cholera rate (per 100,000)</option>
+              <option value="flood">Flood frequency (years flooded)</option>
+              <option value="lisa">Spatial cluster (LISA)</option>
+              <option value="wash">WASH score</option>
+            </select>
+          </label>
+          <label>Year
+            <select id="yearSelect">
+              <option value="all">All years (2011-2016 total)</option>
+              <option value="2011">2011</option>
+              <option value="2012">2012</option>
+              <option value="2013">2013</option>
+              <option value="2014">2014</option>
+              <option value="2015">2015</option>
+              <option value="2016">2016</option>
+            </select>
+          </label>
+          <label>Search district
+            <input type="text" id="districtSearch" class="search-box" placeholder="Type a district name...">
+          </label>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: CHARTS -->
+    <div>
+      <div class="panel">
+        <h2>Flooding vs Cholera Cases (2011–2016)</h2>
+        <canvas id="timeSeriesChart" height="200"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Top 10 Districts by Cholera Burden</h2>
+        <canvas id="topDistrictsChart" height="220"></canvas>
+      </div>
+      <div class="panel">
+        <h2>WASH Coverage vs Cholera Rate</h2>
+        <canvas id="scatterChart" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>District Data Table</h2>
+    <div class="controls">
+      <input type="text" id="tableSearch" class="search-box" placeholder="Filter table by district or region...">
+    </div>
+    <div style="max-height:420px; overflow-y:auto;">
+      <table class="dtable" id="dataTable">
+        <thead>
+          <tr>
+            <th data-key="district">District</th>
+            <th data-key="region">Region</th>
+            <th data-key="total_flood_years">Flood Years</th>
+            <th data-key="total_cases">Total Cases</th>
+            <th data-key="cases_per_100k">Rate /100k</th>
+            <th data-key="wat_cov">Water %</th>
+            <th data-key="san_cov">Sanitation %</th>
+            <th data-key="hw_cov">Handwash %</th>
+            <th data-key="lisa_class">Cluster</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Data: District-level flooding & cholera surveillance, Uganda, 2011–2016 (WASH coverage from national surveys).
+  Dashboard built with Leaflet.js & Chart.js — static, client-side only, hosted via GitHub Pages.<br>
+  District centroid coordinates are approximate (for visualization only, not survey-grade GIS boundaries).
+</footer>
+
+<script>
+let DATA = [];
+let map, markersLayer;
+const REGION_COLORS = {Central:'#1b6ca8', Eastern:'#13868c', Northern:'#7f8c8d', Western:'#c0392b'};
+const LISA_COLORS = {
+  'High-High (Hotspot Cluster)': '#c0392b',
+  'Low-Low (Coldspot Cluster)': '#1b6ca8',
+  'High-Low (Outlier)': '#e67e22',
+  'Low-High (Outlier)': '#9b59b6'
+};
+const LISA_BADGE = {
+  'High-High (Hotspot Cluster)': 'badge-hh',
+  'Low-Low (Coldspot Cluster)': 'badge-ll',
+  'High-Low (Outlier)': 'badge-hl',
+  'Low-High (Outlier)': 'badge-lh'
+};
+
+fetch('data.json').then(r => r.json()).then(json => {
+  DATA = json;
+  initStatCards();
+  initMap();
+  initTable();
+  initCharts();
+});
+
+function initStatCards(){
+  const totalCases = DATA.reduce((s,d)=>s+d.total_cases,0);
+  const floodDistrictYears = DATA.reduce((s,d)=>s+d.total_flood_years,0);
+  const avgWat = (DATA.reduce((s,d)=>s+d.wat_cov,0)/DATA.length).toFixed(1);
+  const avgSan = (DATA.reduce((s,d)=>s+d.san_cov,0)/DATA.length).toFixed(1);
+  const hotspots = DATA.filter(d=>d.lisa_class.includes('High-High')).length;
+  const affected = DATA.filter(d=>d.total_cases>0).length;
+
+  const cards = [
+    {label:'Total Cholera Cases', value: totalCases.toLocaleString(), sub:'2011–2016, all 112 districts'},
+    {label:'Districts Affected', value: affected + ' / 112', sub: (affected/112*100).toFixed(0)+'% of districts reported cases'},
+    {label:'Flood-District-Years', value: floodDistrictYears.toLocaleString(), sub:'Cumulative flood exposure events'},
+    {label:'Statistical Hotspot Clusters', value: hotspots, sub:'LISA High-High districts'},
+    {label:'Avg. Water Coverage', value: avgWat+'%', sub:'National district average'},
+    {label:'Avg. Sanitation Coverage', value: avgSan+'%', sub:'National district average'},
+  ];
+  document.getElementById('statCards').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="sub">${c.sub}</div>
+    </div>`).join('');
+}
+
+function getMetricValue(d, layer, year){
+  if(layer==='cases'){
+    if(year==='all') return d.cases_per_100k;
+    const y = d.yearly.find(x=>String(x.year)===String(year));
+    return y ? y.cases : 0;
+  }
+  if(layer==='flood'){
+    if(year==='all') return d.total_flood_years;
+    const y = d.yearly.find(x=>String(x.year)===String(year));
+    return y ? y.flooded : 0;
+  }
+  if(layer==='wash') return d.score;
+  return null; // lisa uses categorical
+}
+
+function colorForValue(layer, d, year){
+  if(layer==='lisa') return LISA_COLORS[d.lisa_class] || '#999';
+  if(layer==='wash'){
+    const v = d.score;
+    if(v>=70) return '#1b6ca8';
+    if(v>=50) return '#13868c';
+    if(v>=30) return '#f1c40f';
+    return '#c0392b';
+  }
+  const v = getMetricValue(d, layer, year);
+  if(layer==='flood'){
+    if(v>=4) return '#c0392b';
+    if(v>=2) return '#e67e22';
+    if(v>=1) return '#f1c40f';
+    return '#bdc3c7';
+  }
+  // cases
+  if(v > 200) return '#c0392b';
+  if(v > 50) return '#e67e22';
+  if(v > 0) return '#f1c40f';
+  return '#bdc3c7';
+}
+
+function radiusForValue(layer, d, year){
+  if(layer==='lisa') return 7;
+  const v = getMetricValue(d, layer, year);
+  if(layer==='flood') return 5 + (v||0)*3;
+  if(layer==='wash') return 8;
+  return 5 + Math.sqrt(v||0) * 1.3;
+}
+
+function initMap(){
+  map = L.map('map', {scrollWheelZoom:false}).setView([1.4, 32.3], 6.6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 12
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+  drawMarkers();
+
+  const legend = L.control({position:'bottomright'});
+  legend.onAdd = function(){
+    const div = L.DomUtil.create('div','legend-box');
+    div.id = 'legendBox';
+    return div;
+  };
+  legend.addTo(map);
+  updateLegend();
+
+  document.getElementById('layerSelect').addEventListener('change', ()=>{drawMarkers(); updateLegend();});
+  document.getElementById('yearSelect').addEventListener('change', ()=>{drawMarkers(); updateLegend();});
+  document.getElementById('districtSearch').addEventListener('input', onSearch);
+}
+
+function onSearch(e){
+  const q = e.target.value.trim().toLowerCase();
+  if(!q) return;
+  const match = DATA.find(d=>d.district.toLowerCase().startsWith(q));
+  if(match){
+    map.setView([match.lat, match.lon], 9, {animate:true});
+  }
+}
+
+function drawMarkers(){
+  markersLayer.clearLayers();
+  const layer = document.getElementById('layerSelect').value;
+  const year = document.getElementById('yearSelect').value;
+
+  DATA.forEach(d=>{
+    const color = colorForValue(layer, d, year);
+    const radius = radiusForValue(layer, d, year);
+    const marker = L.circleMarker([d.lat, d.lon], {
+      radius: radius,
+      fillColor: color,
+      color: '#333',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.75
+    });
+    const yearCasesRow = year==='all' ? '' : `<div class="popup-row"><b>${year} cases:</b> ${d.yearly.find(x=>String(x.year)===year)?.cases ?? 0}</div>`;
+    marker.bindPopup(`
+      <div class="popup-title">${d.district} <span style="font-weight:400;color:#7f8c8d;">(${d.region})</span></div>
+      <div class="popup-row"><b>Population:</b> ${d.population.toLocaleString()}</div>
+      <div class="popup-row"><b>Total cases (2011-16):</b> ${d.total_cases} &nbsp;(${d.cases_per_100k}/100k)</div>
+      <div class="popup-row"><b>Flood years:</b> ${d.total_flood_years} of 6</div>
+      ${yearCasesRow}
+      <div class="popup-row"><b>Water/Sanitation/Handwash:</b> ${d.wat_cov}% / ${d.san_cov}% / ${d.hw_cov}%</div>
+      <div class="popup-row"><span class="tag ${LISA_BADGE[d.lisa_class]}">${d.lisa_class}</span></div>
+    `);
+    marker.addTo(markersLayer);
+  });
+}
+
+function updateLegend(){
+  const layer = document.getElementById('layerSelect').value;
+  let html = '';
+  if(layer==='cases'){
+    html = '<b>Cholera rate</b><br>' +
+      legendItem('#c0392b','High (>200 /100k)') + legendItem('#e67e22','Moderate (50–200)') +
+      legendItem('#f1c40f','Low (0–50)') + legendItem('#bdc3c7','No cases');
+  } else if(layer==='flood'){
+    html = '<b>Flood frequency</b><br>' +
+      legendItem('#c0392b','4+ years flooded') + legendItem('#e67e22','2–3 years') +
+      legendItem('#f1c40f','1 year') + legendItem('#bdc3c7','Never flooded');
+  } else if(layer==='lisa'){
+    html = '<b>Spatial cluster (LISA)</b><br>' +
+      legendItem(LISA_COLORS['High-High (Hotspot Cluster)'],'High-High Hotspot') +
+      legendItem(LISA_COLORS['Low-Low (Coldspot Cluster)'],'Low-Low Coldspot') +
+      legendItem(LISA_COLORS['High-Low (Outlier)'],'High-Low Outlier') +
+      legendItem(LISA_COLORS['Low-High (Outlier)'],'Low-High Outlier');
+  } else if(layer==='wash'){
+    html = '<b>WASH composite score</b><br>' +
+      legendItem('#1b6ca8','High (≥70)') + legendItem('#13868c','Moderate (50–69)') +
+      legendItem('#f1c40f','Low (30–49)') + legendItem('#c0392b','Very low (<30)');
+  }
+  document.getElementById('legendBox').innerHTML = html;
+}
+function legendItem(color, label){
+  return `<div class="legend-item"><span class="dot" style="background:${color}"></span>${label}</div>`;
+}
+
+// ============ TABLE ============
+let sortKey = 'total_cases', sortAsc = false;
+function initTable(){
+  renderTable(DATA);
+  document.querySelectorAll('#dataTable th').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      if(sortKey===key) sortAsc=!sortAsc; else {sortKey=key; sortAsc=true;}
+      renderTable(filterData());
+    });
+  });
+  document.getElementById('tableSearch').addEventListener('input', ()=>renderTable(filterData()));
+}
+function filterData(){
+  const q = document.getElementById('tableSearch').value.trim().toLowerCase();
+  if(!q) return DATA;
+  return DATA.filter(d=>d.district.toLowerCase().includes(q) || d.region.toLowerCase().includes(q));
+}
+function renderTable(rows){
+  const sorted = [...rows].sort((a,b)=>{
+    let va=a[sortKey], vb=b[sortKey];
+    if(typeof va==='string'){ va=va.toLowerCase(); vb=vb.toLowerCase(); return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va); }
+    return sortAsc ? va-vb : vb-va;
+  });
+  document.getElementById('tableBody').innerHTML = sorted.map(d=>`
+    <tr>
+      <td>${d.district}</td>
+      <td>${d.region}</td>
+      <td>${d.total_flood_years}</td>
+      <td>${d.total_cases}</td>
+      <td>${d.cases_per_100k.toFixed(1)}</td>
+      <td>${d.wat_cov}</td>
+      <td>${d.san_cov}</td>
+      <td>${d.hw_cov}</td>
+      <td><span class="tag ${LISA_BADGE[d.lisa_class]}">${d.lisa_class.split(' (')[0]}</span></td>
+    </tr>`).join('');
+}
+
+// ============ CHARTS ============
+function initCharts(){
+  const years = [2011,2012,2013,2014,2015,2016];
+  const floodedByYear = years.map(y=>DATA.reduce((s,d)=>s+(d.yearly.find(x=>x.year===y)?.flooded||0),0));
+  const casesByYear = years.map(y=>DATA.reduce((s,d)=>s+(d.yearly.find(x=>x.year===y)?.cases||0),0));
+
+  new Chart(document.getElementById('timeSeriesChart'), {
+    data: {
+      labels: years,
+      datasets: [
+        {type:'bar', label:'Flooded Districts', data: floodedByYear, backgroundColor:'#1b6ca8aa', yAxisID:'y'},
+        {type:'line', label:'Cholera Cases', data: casesByYear, borderColor:'#c0392b', backgroundColor:'#c0392b', tension:0.3, yAxisID:'y1', pointRadius:5}
+      ]
+    },
+    options: {
+      responsive:true,
+      interaction:{mode:'index', intersect:false},
+      scales: {
+        y: {type:'linear', position:'left', title:{display:true,text:'# Flooded Districts'}},
+        y1: {type:'linear', position:'right', title:{display:true,text:'Cholera Cases'}, grid:{drawOnChartArea:false}}
+      }
+    }
+  });
+
+  const top10 = [...DATA].sort((a,b)=>b.total_cases-a.total_cases).slice(0,10).reverse();
+  new Chart(document.getElementById('topDistrictsChart'), {
+    type: 'bar',
+    data: {
+      labels: top10.map(d=>d.district),
+      datasets: [{
+        label: 'Total Cholera Cases (2011-2016)',
+        data: top10.map(d=>d.total_cases),
+        backgroundColor: top10.map(d=> d.lisa_class.includes('High-High') ? '#c0392b' : '#7f8c8d')
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive:true,
+      plugins:{legend:{display:false}}
+    }
+  });
+
+  new Chart(document.getElementById('scatterChart'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Districts (bubble = flood years)',
+        data: DATA.map(d=>({x:d.wat_cov, y:d.cases_per_100k, r: 3+d.total_flood_years*2, district:d.district})),
+        backgroundColor: '#13868c99'
+      }]
+    },
+    options: {
+      responsive:true,
+      parsing:false,
+      plugins: {
+        legend:{display:false},
+        tooltip: { callbacks: { label: (ctx)=> `${ctx.raw.district}: water ${ctx.raw.x}%, rate ${ctx.raw.y.toFixed(1)}/100k` } }
+      },
+      scales: {
+        x: {title:{display:true,text:'Water Coverage (%)'}},
+        y: {title:{display:true,text:'Cholera Rate per 100,000'}}
+      },
+      elements: {point:{radius: (ctx)=> ctx.raw ? ctx.raw.r : 4}}
+    }
+  });
+}
+</script>
+
+</body>
+</html>
