@@ -2,7 +2,7 @@
 
 A spatiotemporal analysis of the relationship between flooding, WASH (water, sanitation, hygiene) coverage, and cholera burden across Uganda's 112 districts, with an interactive web dashboard.
 
-**[Live Dashboard →](https://YOUR-USERNAME.github.io/uganda-flooding-cholera/)** *(update this link after deploying — see [Deployment](#-deploying-to-github-pages) below)*
+**[Live Dashboard →](https://viviannakate.github.io/Cholera-Incidence-and-Flooding-in-Uganda/)** *(update this link after deploying — see [Deployment](#-deploying-to-github-pages) below)*
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
